@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Eye Tracker Cursor Control</title>
+<style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        #cursor {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .selectable {
+            width: 100px;
+            height: 100px;
+            background-color: #ddd;
+            display: inline-block;
+            margin: 20px;
+        }
+    </style>
+<link href="manifest.json" rel="manifest"/>
+<script>
+// Theoretical eye-tracking logic (Assume we have x and y coordinates of where the user is looking)
+let eyeX = 0;
+let eyeY = 0;
+
+// Red dots representing eye positions
+let redDotLeft = document.createElement("div");
+let redDotRight = document.createElement("div");
+
+// Initialize red dots
+function initializeRedDots() {
+    redDotLeft.style.width = "10px";
+    redDotLeft.style.height = "10px";
+    redDotLeft.style.background = "red";
+    redDotLeft.style.position = "absolute";
+    
+    redDotRight.style.width = "10px";
+    redDotRight.style.height = "10px";
+    redDotRight.style.background = "red";
+    redDotRight.style.position = "absolute";
+    
+    document.body.appendChild(redDotLeft);
+    document.body.appendChild(redDotRight);
+}
+
+// Update red dots based on eye position
+function updateRedDots() {
+    redDotLeft.style.left = eyeX + "px";
+    redDotLeft.style.top = eyeY + "px";
+    redDotRight.style.left = eyeX + 20 + "px"; // Assume the eyes are 20 pixels apart
+    redDotRight.style.top = eyeY + "px";
+}
+
+// Calibration logic
+let calibrationX = 0;
+let calibrationY = 0;
+function calibrate(event) {
+    calibrationX = event.clientX;
+    calibrationY = event.clientY;
+    // Update eye positions based on calibration
+    eyeX = calibrationX;
+    eyeY = calibrationY;
+    updateRedDots();
+}
+
+// Add tap event for calibration
+document.addEventListener("click", calibrate);
+
+// Function to select button
+function selectButton() {
+    let button = document.getElementById("sampleButton");
+    let rect = button.getBoundingClientRect();
+    if (eyeX >= rect.left && eyeX <= rect.right && eyeY >= rect.top && eyeY <= rect.bottom) {
+        alert("Button Selected!");
+    }
+}
+
+// Add button tap event
+document.getElementById("sampleButton").addEventListener("click", selectButton);
+
+// Initialize red dots and update them
+initializeRedDots();
+updateRedDots();
+
+    // Calibration code
+    function startCalibration() {
+        alert("Starting Calibration. Please look at all four corners of the screen and then the center.");
+        // Your calibration logic here
+    }
+    // Call the calibration function at the beginning
+    startCalibration();
+    
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js");
+    });
+  }
+</script>
+</head>
+<body>
+<div id="cursor"></div>
+<div class="selectable"></div>
+<div class="selectable"></div>
+<div class="selectable"></div>
+<script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+<script>
+        window.onload = function() {
+            var cursor = document.getElementById('cursor');
+
+            // Initialize webgazer
+            webgazer.setGazeListener(function(data, elapsedTime) {
+                if (data == null) return;
+                
+                // Move the cursor to the predicted gaze point
+                cursor.style.left = (data.x - cursor.offsetWidth / 2) + 'px';
+                cursor.style.top = (data.y - cursor.offsetHeight / 2) + 'px';
+
+                // Check if the cursor is over a selectable element
+                var elem = document.elementFromPoint(data.x, data.y);
+                if (elem && elem.classList.contains('selectable')) {
+                    cursor.style.backgroundColor = 'green';
+                } else {
+                    cursor.style.backgroundColor = 'red';
+                }
+            }).begin();
+
+            // For demonstration purposes, simulate blink with a double click
+            document.addEventListener('dblclick', function() {
+                var elem = document.elementFromPoint(cursor.offsetLeft + cursor.offsetWidth / 2, cursor.offsetTop + cursor.offsetHeight / 2);
+                if (elem && elem.classList.contains('selectable')) {
+                    alert('Element selected!');
+                }
+            });
+        }
+    </script>
+<button id="sampleButton" style="position: absolute; top: 50%; left: 50%;">Select Me</button></body>
+</html>
